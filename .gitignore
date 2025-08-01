@@ -1,0 +1,35 @@
+Python and Virtual Environment
+
+venv/ env/ *.pyc pycache/ *.pyo *.pyd .Python pip-log.txt pip-delete-this-directory.txt
+
+Django
+
+*.log *.pot *.pyc local_settings.py db.sqlite3 media/ staticfiles/
+
+Sensitive Files
+
+.env .env.local .env.development.local .env.test.local .env.production.local
+
+IDE/Editor
+
+.vscode/ .idea/ *.sublime-project *.sublime-workspace
+
+macOS
+
+.DS_Store .AppleDouble .LSOverride Icon
+
+Windows
+
+Thumbs.db ehthumbs.db Desktop.ini
+
+Testing and Coverage
+
+.coverage .coverage.* .cache nosetests.xml coverage.xml *.cover *.py,cover .pytest_cache/
+
+Build and Packaging
+
+build/ dist/ *.egg-info/ *.egg
+
+Other
+
+*.bak *.swp *~ *.tmp
