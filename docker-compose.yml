@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_NAME=jobops
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+    networks:
+      - jobops-network
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=jobops
+      - POSTGRES_USER=jobops_user
+      - POSTGRES_PASSWORD=jobops_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - jobops-network
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379"
+    networks:
+      - jobops-network
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A jobops worker -l info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_NAME=jobops
+      - DATABASE_USER=jobops_user
+      - DATABASE_PASSWORD=jobops_pass
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - redis
+      - db
+    volumes:
+      - .:/app
+    networks:
+      - jobops-network
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A jobops beat -l info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_NAME=jobops
+      - DATABASE_USER=jobops_user
+      - DATABASE_PASSWORD=jobops_pass
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - redis
+      - db
+    volumes:
+      - .:/app
+    networks:
+      - jobops-network
+
+networks:
+  jobops-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
