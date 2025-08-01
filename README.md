@@ -42,6 +42,3 @@ A lightweight Django-based system for managing internal operations, including jo
    ```
    Access the app at `http://localhost:8000`.
 
-## Next Steps
-- Define models for jobs, tasks, and equipment.
-- Implement JWT authentication and role-based permissions.
