@@ -57,7 +57,7 @@ A lightweight Django-based system for managing internal operations, including jo
 1. **Clone the Repository**:
 
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/saqibmehmood/jobops.git
    cd jobops
    ```
 
@@ -66,10 +66,10 @@ A lightweight Django-based system for managing internal operations, including jo
    ```
    SECRET_KEY=your-secret-key
    DEBUG=True
-   ALLOWED_HOSTS=jobops.local,localhost,127.0.0.1
+   ALLOWED_HOSTS=localhost,127.0.0.1 #or domian/ip etc
    DATABASE_NAME=jobops
-   DATABASE_USER=jobops_user
-   DATABASE_PASSWORD=jobops_pass
+   DATABASE_USER=postgres
+   DATABASE_PASSWORD=postgres
    DATABASE_HOST=db
    DATABASE_PORT=5432
    CELERY_BROKER_URL=redis://redis:6379/0
@@ -91,12 +91,12 @@ A lightweight Django-based system for managing internal operations, including jo
    - Starts Django, PostgreSQL, Redis, Celery, and Celery Beat.
    - Runs `generate_dummy_data` on startup, creating test data (1 Admin, 2 Technicians, 2 SalesAgents, 5 equipment items, 10 jobs, 2-5 tasks per job).
    - Access:
-     - Admin panel: `http://jobops.local/admin` (or `http://localhost:8000/admin` for local dev)
-     - APIs: `http://jobops.local/api/` (or `http://localhost:8000/api/`)
+     - Admin panel: `http://localhost:8000/admin` (or `http://BaseURL/admin` for local dev or prod)
+     - APIs: `http://BaseURL/admin` (or `http://localhost:8000/api/`)
 
 4. **Access Admin Panel**:
 
-   - Open `http://jobops.local/admin` (or `http://localhost:8000/admin`).
+   - Open `http://BaseURL/admin` (or `http://localhost:8000/admin`).
    - Log in with:
      - Dummy Admin: Username `admin1`, Password `admin123` (created by `generate_dummy_data`).
      - Or create a superuser:
@@ -108,7 +108,7 @@ A lightweight Django-based system for managing internal operations, including jo
 
 5. **Configure Celery Periodic Tasks**:
 
-   - In the admin panel (`http://jobops.local/admin`), go to `Periodic Tasks` (under `django_celery_beat`).
+   - In the admin panel (`http://BaseURL/admin`), go to `Periodic Tasks` (under `django_celery_beat`).
    - Add:
      - Name: “Flag Overdue Jobs”
      - Task: `core.tasks.flag_overdue_jobs`
@@ -128,19 +128,19 @@ A lightweight Django-based system for managing internal operations, including jo
    - **Login as Technician** (`tech1`):
 
      ```bash
-     curl -X POST http://jobops.local/api/login/ -H "Content-Type: application/json" -d '{"username":"tech1","password":"tech1123"}'
+     curl -X POST http://localhost:8000/api/login/ -H "Content-Type: application/json" -d '{"username":"tech1","password":"tech1123"}'
      ```
 
      Copy the `access` token from the response.
    - **Check Technician Dashboard**:
 
      ```bash
-     curl -X GET http://jobops.local/api/technician/dashboard/ -H "Authorization: Bearer <tech1-token>" -H "Content-Type: application/json"
+     curl -X GET http://localhost:8000/api/technician/dashboard/ -H "Authorization: Bearer <tech1-token>" -H "Content-Type: application/json"
      ```
    - **List Equipment** (Admin-only):
 
      ```bash
-     curl -X GET http://jobops.local/api/equipment/ -H "Authorization: Bearer <admin-token>" -H "Content-Type: application/json"
+     curl -X GET http://localhost:8000/api/equipment/ -H "Authorization: Bearer <admin-token>" -H "Content-Type: application/json"
      ```
    - **Test Overdue Flagging**:
 
@@ -160,18 +160,18 @@ A lightweight Django-based system for managing internal operations, including jo
    - **POST /api/signup/**: Register user (Admin-only).
 
      ```bash
-     curl -X POST http://jobops.local/api/signup/ -H "Content-Type: application/json" -H "Authorization: Bearer <admin-token>" -d '{"username":"tech2","email":"tech2@example.com","password":"tech12345","role":"TECHNICIAN"}'
+     curl -X POST http://localhost:8000/api/signup/ -H "Content-Type: application/json" -H "Authorization: Bearer <admin-token>" -d '{"username":"tech2","email":"tech2@example.com","password":"tech12345","role":"TECHNICIAN"}'
      ```
    - **POST /api/login/**: Get JWT tokens.
    - **POST /api/token/refresh/**: Refresh access token.
 
      ```bash
-     curl -X POST http://jobops.local/api/token/refresh/ -H "Content-Type: application/json" -d '{"refresh":"your-refresh-token"}'
+     curl -X POST http://localhost:8000/api/token/refresh/ -H "Content-Type: application/json" -d '{"refresh":"your-refresh-token"}'
      ```
    - **GET/POST /api/jobs/**: List/create jobs.
 
      ```bash
-     curl -X POST http://jobops.local/api/jobs/ -H "Content-Type: application/json" -H "Authorization: Bearer <sales-agent-token>" -d '{"title":"Install AC","description":"Install air conditioner","client_name":"ABC Corp","assigned_to_id":2,"status":"PENDING","priority":"MEDIUM","scheduled_date":"2025-08-10T10:00:00Z"}'
+     curl -X POST http://localhost:8000/api/jobs/ -H "Content-Type: application/json" -H "Authorization: Bearer <sales-agent-token>" -d '{"title":"Install AC","description":"Install air conditioner","client_name":"ABC Corp","assigned_to_id":2,"status":"PENDING","priority":"MEDIUM","scheduled_date":"2025-08-10T10:00:00Z"}'
      ```
    - **GET/PUT/DELETE /api/jobs//**: Retrieve/update/delete job (Admins).
    - **GET/POST /api/tasks/**: List/create tasks.
@@ -182,7 +182,7 @@ A lightweight Django-based system for managing internal operations, including jo
    - **GET /api/test-auth/**: Test authenticated access.
 
      ```bash
-     curl -H "Authorization: Bearer <access-token>" http://jobops.local/api/test-auth/
+     curl -H "Authorization: Bearer <access-token>" http://localhost:8000/api/test-auth/
      ```
 
 ## Notes for AWS Deployment
