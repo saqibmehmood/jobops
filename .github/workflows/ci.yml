@@ -8,6 +8,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: jobops
+          POSTGRES_USER: jobops_user
+          POSTGRES_PASSWORD: jobops_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,8 +41,12 @@ jobs:
           DJANGO_SETTINGS_MODULE: jobops.settings
           SECRET_KEY: test-secret-key
           DEBUG: True
-          DATABASES: '{"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}'
-          # Forces SQLite for tests, no PostgreSQL/Redis
+          DATABASE_NAME: jobops
+          DATABASE_USER: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_HOST: db
+          DATABASE_PORT: 5432
+          # Note: Uses PostgreSQL service for tests, matches settings.py
         run: |
           python manage.py test core.tests.UserModelTest
 
