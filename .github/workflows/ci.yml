@@ -24,10 +24,11 @@ jobs:
 
       - name: Run Django tests
         env:
-          CI: True # Enable SQLite in settings.py
+          DJANGO_SETTINGS_MODULE: jobops.settings
           SECRET_KEY: test-secret-key
           DEBUG: True
-          # Note: Uses SQLite (:memory:) for tests, no PostgreSQL/Redis needed
+          DATABASES: '{"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}'
+          # Forces SQLite for tests, no PostgreSQL/Redis
         run: |
           python manage.py test core.tests.UserModelTest
 
@@ -47,11 +48,9 @@ jobs:
           registry: ghcr.io
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
-          # Note: Set GHCR_USERNAME and GHCR_TOKEN in GitHub Secrets
           # GHCR_USERNAME: Your GitHub username (e.g., 'yourusername')
-          # GHCR_TOKEN: GitHub Personal Access Token with 'write:packages' scope
-          # Go to: Repo -> Settings -> Secrets and variables -> Actions -> New repository secret
-
+          # GHCR_TOKEN: GitHub PAT with 'write:packages' scope
+          # Set in: Repo -> Settings -> Secrets and variables -> Actions
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -59,5 +58,4 @@ jobs:
           file: Dockerfile
           push: true
           tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/jobops:${{ github.sha }}
-          # Replace 'yourusername' in 'ghcr.io/yourusername/jobops' with your actual GitHub username
-          # Example: If your GitHub username is 'johndoe', use 'ghcr.io/johndoe/jobops:${{ github.sha }}'
+          # Replace 'yourusername' with your GitHub username (e.g., 'johndoe')
