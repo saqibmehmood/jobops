@@ -42,8 +42,8 @@ jobs:
           SECRET_KEY: test-secret-key
           DEBUG: True
           DATABASE_NAME: jobops
-          DATABASE_USER: postgres
-          DATABASE_PASSWORD: postgres
+          DATABASE_USER: jobops_user        # ← match docker service
+          DATABASE_PASSWORD: jobops_pass    # ← match docker service
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
           # Note: Uses PostgreSQL service for tests, matches settings.py
