@@ -53,24 +53,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'jobops.wsgi.application'
 
-if os.getenv('CI') == 'True':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': ':memory:',
-        }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DATABASE_NAME'),
+        'USER': config('DATABASE_USER'),
+        'PASSWORD': config('DATABASE_PASSWORD'),
+        'HOST': config('DATABASE_HOST'),
+        'PORT': config('DATABASE_PORT'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DATABASE_NAME', default='jobops'),
-            'USER': config('DATABASE_USER', default='postgres'),
-            'PASSWORD': config('DATABASE_PASSWORD', default='postgres'),
-            'HOST': config('DATABASE_HOST', default='db'),
-            'PORT': config('DATABASE_PORT', default='5432'),
-        }
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
