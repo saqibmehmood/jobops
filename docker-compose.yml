@@ -9,6 +9,8 @@ services:
       - "8000:8000"
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DATABASE_NAME=jobops
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=postgres
@@ -28,19 +30,19 @@ services:
     image: postgres:13
     environment:
       - POSTGRES_DB=jobops
-      - POSTGRES_USER=jobops_user
-      - POSTGRES_PASSWORD=jobops_pass
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - jobops-network
 
   redis:
-    image: redis:6
-    ports:
-      - "6379:6379"
-    networks:
-      - jobops-network
+     image: redis:6
+     ports:
+       - "6380:6379"
+     networks:
+       - jobops-network
 
   celery:
     build:
@@ -49,9 +51,11 @@ services:
     command: celery -A jobops worker -l info
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DATABASE_NAME=jobops
-      - DATABASE_USER=jobops_user
-      - DATABASE_PASSWORD=jobops_pass
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
       - DATABASE_HOST=db
       - DATABASE_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -72,9 +76,11 @@ services:
     command: celery -A jobops beat -l info
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DATABASE_NAME=jobops
-      - DATABASE_USER=jobops_user
-      - DATABASE_PASSWORD=jobops_pass
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
       - DATABASE_HOST=db
       - DATABASE_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
