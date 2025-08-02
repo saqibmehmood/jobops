@@ -44,7 +44,7 @@ jobs:
           DATABASE_NAME: jobops
           DATABASE_USER: postgres
           DATABASE_PASSWORD: postgres
-          DATABASE_HOST: db
+          DATABASE_HOST: localhost
           DATABASE_PORT: 5432
           # Note: Uses PostgreSQL service for tests, matches settings.py
         run: |
