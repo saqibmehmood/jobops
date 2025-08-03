@@ -33,3 +33,5 @@ build/ dist/ *.egg-info/ *.egg
 Other
 
 *.bak *.swp *~ *.tmp
+
+.env
