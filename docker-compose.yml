@@ -2,13 +2,15 @@ version: '3.8'
 
 services:
   app:
-    image: ghcr.io/saqibmehmood/jobops:421164fa6c294ee9de881c0edf4cd5622fb75e05
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - SECRET_KEY=your_secret
-      - DEBUG=False
-      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DATABASE_NAME=jobops
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=postgres
@@ -19,6 +21,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - .:/app
     networks:
       - jobops-network
 
@@ -34,7 +38,59 @@ services:
       - jobops-network
 
   redis:
-    image: redis:6
+     image: redis:6
+     ports:
+       - "6380:6379"
+     networks:
+       - jobops-network
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A jobops worker -l info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DATABASE_NAME=jobops
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - redis
+      - db
+    volumes:
+      - .:/app
+    networks:
+      - jobops-network
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A jobops beat -l info
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DATABASE_NAME=jobops
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - redis
+      - db
+    volumes:
+      - .:/app
     networks:
       - jobops-network
 
