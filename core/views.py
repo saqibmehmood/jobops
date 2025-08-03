@@ -1,23 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import status, generics
-from .serializers import UserSerializer, CustomTokenObtainPairSerializer, JobSerializer, JobTaskSerializer, EquipmentSerializer, DashboardJobSerializer
-from .permissions import IsAdmin, IsTechnician, IsSalesAgent
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.pagination import PageNumberPagination
-from .models import Job, JobTask, Equipment
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-class TestAuthView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({"message": f"Hello, {request.user.username} ({request.user.role})!"})
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer, TechnicianDashboardSerializer
+from .permissions import IsAdmin, IsTechnician
+from .models import JobTask
+from django.db.models import Q
+from django.db.models.functions import TruncDate
 
 class SignupView(APIView):
     permission_classes = [IsAdmin]
@@ -36,78 +26,30 @@ class SignupView(APIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-class JobListCreateView(generics.ListCreateAPIView):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
-    filterset_fields = ['status', 'priority', 'overdue']
+class TechnicianDashboardView(APIView):
+    permission_classes = [IsAuthenticated, IsTechnician]
 
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [IsAdmin() | IsSalesAgent()]
-        return [IsAuthenticated()]
+    def get(self, request):
+        # Get upcoming and in-progress tasks for the authenticated technician's jobs
+        tasks = JobTask.objects.filter(
+            Q(job__assigned_to=request.user) &
+            (Q(status='UPCOMING') | Q(status='IN_PROGRESS'))
+        ).annotate(
+            date=TruncDate('job__scheduled_date')  # Group by Job.scheduled_date
+        ).order_by('job__scheduled_date').prefetch_related('required_equipment')
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == 'TECHNICIAN':
-            return Job.objects.filter(assigned_to=user)
-        return Job.objects.all()
+        # Group tasks by date
+        grouped_tasks = {}
+        for task in tasks:
+            date_str = task.date.strftime('%Y-%m-%d')
+            if date_str not in grouped_tasks:
+                grouped_tasks[date_str] = []
+            grouped_tasks[date_str].append(task)
 
-class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    permission_classes = [IsAdmin]
-
-class JobTaskListCreateView(generics.ListCreateAPIView):
-    queryset = JobTask.objects.all()
-    serializer_class = JobTaskSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
-    filterset_fields = ['status', 'job']
-
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [IsAdmin()]
-        return [IsAuthenticated()]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == 'TECHNICIAN':
-            return JobTask.objects.filter(job__assigned_to=user)
-        return JobTask.objects.all()
-
-class JobTaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = JobTask.objects.all()
-    serializer_class = JobTaskSerializer
-
-    def get_permissions(self):
-        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
-            return [IsAdmin() | IsTechnician()]
-        return [IsAuthenticated()]
-
-class EquipmentListCreateView(generics.ListCreateAPIView):
-    queryset = Equipment.objects.all()
-    serializer_class = EquipmentSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = StandardResultsSetPagination
-    filterset_fields = ['type', 'is_active']
-
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [IsAdmin()]
-        return [IsAuthenticated()]
-
-class EquipmentDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Equipment.objects.all()
-    serializer_class = EquipmentSerializer
-    permission_classes = [IsAdmin]
-
-class TechnicianDashboardView(generics.ListAPIView):
-    permission_classes = [IsTechnician]
-    serializer_class = DashboardJobSerializer
-    pagination_class = StandardResultsSetPagination
-    filterset_fields = ['status', 'priority', 'overdue']
-
-    def get_queryset(self):
-        return Job.objects.filter(assigned_to=self.request.user).prefetch_related('jobtask_set__required_equipment')
+        # Serialize grouped data
+        data = [
+            {'date': date, 'tasks': tasks}
+            for date, tasks in grouped_tasks.items()
+        ]
+        serializer = TechnicianDashboardSerializer(data, many=True)
+        return Response(serializer.data)
