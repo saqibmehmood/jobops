@@ -296,7 +296,7 @@ curl -H "Authorization: Bearer <technician-jwt-token>" baseUrl/api/technician-da
    docker-compose down
    ```
 
-## CI/CD
+## CI
 
 - **GitHub Actions**: Tests run with PostgreSQL (`jobops`, `jobops_user`, `jobops_pass`) and push images to `ghcr.io/<yourusername>/jobops:<commit-sha>`.
 - **Verify Image**:
